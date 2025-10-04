@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>♻️ EcoResíduos</title>
+    
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoResíduos - Guia de Reciclagem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .modal-bg { backdrop-filter: blur(5px); }
+        .category-button { transition: all 0.2s ease-in-out; }
+        .waste-card { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .waste-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .chart-container { position: relative; width: 100%; max-width: 320px; margin-left: auto; margin-right: auto; height: 320px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <header class="bg-white shadow-sm sticky top-0 z-20">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl text-emerald-600">♻️</span>
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800">EcoResíduos</h1>
+                    <p class="text-xs font-medium text-emerald-600 mt-[-2px]">Guia de Reciclagem por Cores</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+
+        <section id="search-section" class="mb-8 text-center">
+            <h2 class="text-2xl md:text-3xl font-bold mb-2">O que você quer descartar hoje?</h2>
+            <p class="text-slate-600 mb-6 max-w-2xl mx-auto">Pesquise pelo nome do item ou filtre por categoria para encontrar as instruções de descarte corretas e a cor correspondente.</p>
+            <div class="max-w-xl mx-auto mb-4">
+                <input type="text" id="searchInput" placeholder="Ex: Garrafa PET, Casca de Banana..." class="w-full px-4 py-3 border border-slate-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div id="categoryFilters" class="flex flex-wrap justify-center gap-2">
+            </div>
+        </section>
+
+        <section id="results-section">
+            <div id="resultsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            </div>
+             <p id="noResults" class="text-center text-slate-500 py-10 hidden">Nenhum resíduo encontrado. Tente uma busca diferente.</p>
+        </section>
+
+        <section id="stats-section" class="mt-12 pt-8 border-t border-slate-200">
+             <h2 class="text-2xl md:text-3xl font-bold mb-4 text-center">Distribuição de Resíduos</h2>
+             <p class="text-slate-600 mb-6 max-w-2xl mx-auto text-center">Visão geral das categorias de resíduos cadastradas em nosso banco de dados. As cores representam o padrão de descarte.</p>
+            <div class="chart-container">
+                <canvas id="wasteChart"></canvas>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white mt-12 py-6 border-t border-slate-200">
+        <div class="container mx-auto px-4 text-center text-slate-500 text-sm">
+            <p>© 2025 EcoResíduos. Promovendo um futuro mais sustentável.</p>
+        </div>
+    </footer>
+
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 modal-bg flex items-center justify-center p-4 z-50 hidden">
+        <div id="modal-content" class="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-95 opacity-0">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                     <h3 id="modal-title" class="text-2xl font-bold text-slate-800"></h3>
+                    <button id="closeModal" class="text-slate-400 hover:text-slate-800">×</button>
+                </div>
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="md:w-1/3 flex-shrink-0">
+                        <!-- Substituído a Imagem por um Bloco de Cor -->
+                        <div id="modal-color-block" class="w-full h-40 object-cover rounded-md shadow-md flex items-center justify-center">
+                            <span class="text-2xl font-bold"></span>
+                        </div>
+                        <p id="modal-category" class="text-center mt-2 font-semibold text-sm py-1 px-3 rounded-full"></p>
+                    </div>
+                    <div class="md:w-2/3">
+                        <h4 class="font-bold text-lg mb-2 text-emerald-700">Dicas de Descarte Correto</h4>
+                        <div id="modal-tips" class="text-slate-600 space-y-2 mb-6"></div>
+                         <a id="map-link" href="#" target="_blank" class="mb-4 inline-flex items-center gap-2 bg-emerald-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-emerald-700 transition-colors">
+                            📍 Encontrar Ecopontos Próximos
+                        </a>
+                        
+                        <!-- Reutilização Criativa com Dicas Estáticas -->
+                        <div class="mt-6 pt-4 border-t border-slate-200">
+                            <h4 class="font-bold text-lg mb-2 text-amber-700 inline-flex items-center gap-2">
+                                Ideias de Reutilização Criativa ✨
+                            </h4>
+                            <ul id="reuseIdeasOutput" class="list-disc ml-5 mt-2 space-y-1 text-slate-700 text-sm p-4 bg-amber-50 rounded-lg">
+                                <!-- Dicas estáticas são injetadas aqui -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // NOVO MAPA DE CORES CONFORME SOLICITADO PELO USUÁRIO (Padrão ABNT para Reciclagem)
+            const categoryColors = {
+                // Background e Cor do Texto principal (Card) | Background e Cor do Texto Secundário (Modal)
+                "Papel": { bg: "bg-blue-500", text: "text-white", border: "border-blue-700", displayBg: "bg-blue-100", displayText: "text-blue-800" },              // Azul
+                "Metal": { bg: "bg-yellow-500", text: "text-slate-900", border: "border-yellow-700", displayBg: "bg-yellow-100", displayText: "text-yellow-800" },      // Amarelo
+                "Orgânico": { bg: "bg-amber-800", text: "text-white", border: "border-amber-900", displayBg: "bg-amber-100", displayText: "text-amber-900" },        // Marrom (usando tom escuro para contraste)
+                "Plástico": { bg: "bg-red-500", text: "text-white", border: "border-red-700", displayBg: "bg-red-100", displayText: "text-red-800" },              // Vermelho
+                "Vidro": { bg: "bg-green-500", text: "text-white", border: "border-green-700", displayBg: "bg-green-100", displayText: "text-green-800" },          // Verde
+                "Comum/Outros": { bg: "bg-slate-500", text: "text-white", border: "border-slate-700", displayBg: "bg-slate-200", displayText: "text-slate-800" }    // Cinza
+            };
+
+
+            // DADOS DE RESÍDUOS COM DICAS DE REUTILIZAÇÃO ESTÁTICAS
+            const wasteData = [
+                // PLÁSTICO (VERMELHO)
+                { id: 1, nome: "Garrafa PET (Refrigerante)", categoria: "Plástico", dicas: "Lave e seque bem. Achate para economizar espaço no transporte.",
+                    dicasReutilizacao: [
+                        "Corte o fundo e use como vaso auto-irrigável para pequenas plantas.",
+                        "Transforme em 'ecobrick' preenchendo com lixo não reciclável para uso em construções.",
+                        "Corte e use o corpo como embalagem protetora para pequenos objetos frágeis."
+                    ]
+                },
+                { id: 2, nome: "Pote de Iogurte", categoria: "Plástico", dicas: "Remova o rótulo de papel (se houver) e lave o pote por dentro.",
+                    dicasReutilizacao: [
+                        "Use para organizar gavetas (clipes, borrachas, parafusos).",
+                        "Sirva como molde para picolés caseiros.",
+                        "Crie mini vasos para o plantio de sementes e mudas."
+                    ]
+                },
+                { id: 3, nome: "Embalagem de Limpeza (Detergente)", categoria: "Plástico", dicas: "Enxágue para remover o máximo de resíduo químico e feche a tampa.",
+                    dicasReutilizacao: [
+                        "Transforme em regador caseiro furando a tampa com um prego quente.",
+                        "Use o corpo como suporte para carregar o celular enquanto ele carrega na tomada (corte um buraco para o plugue).",
+                        "Pode ser usado como funil após cortar o fundo."
+                    ]
+                },
+                { id: 4, nome: "Sacola Plástica (Limpa)", categoria: "Plástico", dicas: "Empilhe várias sacolas juntas para formar um volume maior antes de descartar.",
+                    dicasReutilizacao: [
+                        "Guarde como sacola para lixo de banheiro ou para coletar fezes de pets.",
+                        "Corte em tiras finas para fazer barbante plástico ('fio de malha') para artesanato.",
+                        "Use para proteger objetos contra poeira ou umidade."
+                    ]
+                },
+                { id: 5, nome: "Copo Descartável", categoria: "Plástico", dicas: "Lave o copo. Se for transparente, é mais fácil de reciclar.",
+                    dicasReutilizacao: [
+                        "Use como medida para receitas.",
+                        "Sirva como protetor para pontas de pincéis de pintura.",
+                        "Use como base para cobrir copos maiores e evitar insetos."
+                    ]
+                },
+                { id: 6, nome: "Tampa Plástica", categoria: "Plástico", dicas: "Pode ser separada e doada para programas sociais, ou descartada junto com a garrafa.", dicasReutilizacao: [ "Use como paleta de tinta para artesanato.", "Cole para criar mosaicos decorativos ou brinquedos.", "Doação: muitas ONGs arrecadam tampinhas para comprar cadeiras de rodas."]},
+                { id: 7, nome: "Canudo Plástico", categoria: "Plástico", dicas: "Difícil de reciclar devido ao tamanho. Evite seu uso. Se descartar, coloque dentro de uma garrafa PET fechada.", dicasReutilizacao: [ "Corte e use como prendedor de pacotes de alimentos (ajuda a selar).", "Transforme em canutilhos para artesanato.", "Use para organizar e manter colares ou fios finos sem embaraçar."]},
+                { id: 8, nome: "Embalagem de Margarina", categoria: "Plástico", dicas: "Lave para retirar a gordura e descarte na coleta seletiva.", dicasReutilizacao: ["Use como pote para guardar sobras de comida na geladeira.", "Sirva como porta-máscaras ou porta-luvas na porta de casa.", "Utilize para misturar pequenas quantidades de tinta ou cola."]},
+                { id: 9, nome: "Tubo de Pasta de Dente (Vazio)", categoria: "Plástico", dicas: "Corte e lave o interior para remover o creme residual. Feche a tampa.", dicasReutilizacao: ["Pode ser cortado para criar pequenos funis.", "Use o material como forro em artesanato.", "Difícil de reutilizar; priorize o descarte correto."]},
+                { id: 10, nome: "Bandeja de Isopor (Limpa)", categoria: "Plástico", dicas: "Embora seja tecnicamente plástico, é difícil de reciclar. Procure pontos específicos ou descarte como comum se estiver suja.", dicasReutilizacao: ["Use como bandeja para misturar tintas de aquarela.", "Sirva como isolante para proteger vasos de plantas contra o frio.", "Utilize como base leve para montagem de maquetes escolares."]},
+                { id: 11, nome: "Pote de Shampoo/Condicionador", categoria: "Plástico", dicas: "Enxágue bem. Pode ser descartado com a tampa ou sem ela.", dicasReutilizacao: ["Use como organizador de cabos elétricos (corte um buraco para saída).", "Pode ser cortado para guardar esponjas e sabonetes no box.", "Reaproveite o bico pump em outras garrafas."]},
+                { id: 12, nome: "Filme Plástico (PVC)", categoria: "Plástico", dicas: "Difícil de reciclar por ser muito fino. Se estiver limpo, agrupe grandes quantidades.", dicasReutilizacao: ["Use para selar temporariamente aberturas de potes de comida.", "Pode ser usado para proteger superfícies em projetos de pintura.", "Não é recomendado para reutilização direta em alimentos."]},
+                { id: 13, nome: "Brinquedos de Plástico Quebrados", categoria: "Plástico", dicas: "Remova partes de metal ou baterias. Descarte o plástico na seletiva.", dicasReutilizacao: ["Use as peças maiores como enfeites ou acessórios de fantasia.", "Tente consertar e doar a parte restante.", "Utilize em projetos de arte ou robótica."]},
+                { id: 14, nome: "Cadeiras de Plástico (Quebradas)", categoria: "Plástico", dicas: "Se for um objeto grande, procure ecopontos ou a coleta de grandes volumes da prefeitura.", dicasReutilizacao: ["Use as partes plásticas maiores para cobrir canteiros ou proteger o chão.", "Se o assento estiver intacto, use-o como banquinho para jardinagem.", "A prioridade é o descarte em um ecoponto para reciclagem de grande volume."]},
+                { id: 15, nome: "Embalagem de Ovos (Plástico)", categoria: "Plástico", dicas: "Lave e descarte na coleta.", dicasReutilizacao: ["Use para congelar pequenas porções de caldo ou tempero.", "Use a embalagem para organizar pequenos objetos como botões ou joias.", "Sirva como paleta para misturar pequenas quantidades de tinta."]},
+                { id: 16, nome: "Discos de CD/DVD", categoria: "Plástico", dicas: "Muitas cooperativas reciclam, mas precisam ser descartados em pontos específicos devido ao tipo de policarbonato.", dicasReutilizacao: ["Crie mosaicos e espelhos decorativos.", "Use para espantar pássaros em jardins.", "Transforme em peso de papel ou suporte para xícaras (coaster)."]},
+                { id: 17, nome: "Escova de Dentes (Plástico)", categoria: "Plástico", dicas: "Algumas marcas têm programas de reciclagem específicos. Caso contrário, descarte como plástico comum.", dicasReutilizacao: ["Use para limpar rejuntes de azulejos ou áreas difíceis (exclusivamente para limpeza).", "Pode ser usada para pentear sobrancelhas ou cílios (após higienização).", "Priorize o descarte em programas de coleta especializada."]},
+                { id: 18, nome: "Embalagem de Frutas e Legumes", categoria: "Plástico", dicas: "Lave para tirar qualquer resíduo orgânico. Descarte na coleta seletiva.", dicasReutilizacao: ["Use para organizar pequenas coisas na geladeira ou despensa.", "Sirva como peneira para escorrer pequenas quantidades de alimentos.", "Reaproveite como bandeja para servir lanches secos."]},
+                { id: 19, nome: "Tubos de PVC (Restos de Obra)", categoria: "Plástico", dicas: "Descarte em ecopontos ou caçambas específicas para construção civil.", dicasReutilizacao: ["Use para organizar ferramentas longas (ex: ancinhos) em garagens.", "Crie nichos ou prateleiras modulares.", "Transforme em alimentador para pássaros ou bebedouros para pets."]},
+                { id: 20, nome: "Cápsulas de Café (Plástico)", categoria: "Plástico", dicas: "Remova o pó de café e a tampa de alumínio. Muitas marcas têm programas de coleta próprios.", dicasReutilizacao: ["Use para artesanato, como base de flores ou guirlandas.", "Pode ser usada para organizar pequenas miçangas ou lantejoulas.", "Priorize a devolução para o programa de reciclagem da marca, se houver."]},
+
+
+                // PAPEL (AZUL)
+                { id: 21, nome: "Jornal e Revista", categoria: "Papel", dicas: "Dobre e empilhe. Não amasse. Retire clipes e grampos de metal.",
+                    dicasReutilizacao: [
+                        "Use para embrulhar objetos frágeis ou para preencher caixas durante uma mudança.",
+                        "Sirva como molde para projetos de papel machê.",
+                        "Use para limpar vidros e janelas, pois não deixa fiapos."
+                    ]
+                },
+                { id: 22, nome: "Caixa de Papelão (Limpa)", categoria: "Papel", dicas: "Desmonte e dobre para reduzir o volume. Reciclável, exceto se tiver resíduos de gordura.",
+                    dicasReutilizacao: [
+                        "Transforme em caixas organizadoras forradas com tecido ou papel decorativo.",
+                        "Use como base para proteger a mesa durante projetos de pintura.",
+                        "Crie brinquedos e casinhas para pets (se for atóxica)."
+                    ]
+                },
+                { id: 23, nome: "Papel de Escritório (Sulfite)", categoria: "Papel", dicas: "Pode ser reciclado mesmo com tinta. Não misture com papel carbono ou plastificado.",
+                    dicasReutilizacao: [
+                        "Use o verso de folhas impressas para rascunhos e anotações.",
+                        "Corte em pequenos blocos para listas de supermercado ou recados.",
+                        "Triture para usar como enchimento em embalagens de presente."
+                    ]
+                },
+                { id: 24, nome: "Folhetos e Panfletos", categoria: "Papel", dicas: "Acumule e descarte na seletiva. Se for papel brilhoso, a reciclagem pode ser mais difícil.",
+                    dicasReutilizacao: [
+                        "Use para acender churrasqueiras ou lareiras.",
+                        "Transforme em origamis ou pequenas peças de artesanato.",
+                        "Forre o fundo de gaiolas ou lixeiras secas."
+                    ]
+                },
+                { id: 25, nome: "Caixa de Remédio (Vazia)", categoria: "Papel", dicas: "Desmonte para ocupar menos espaço. Retire o blister (plástico/metal).", dicasReutilizacao: ["Use a caixa inteira para guardar joias pequenas ou brincos.", "Corte e use as laterais para fazer divisórias em gavetas.", "Recorte figuras para colagens ou projetos de arte."]},
+                { id: 26, nome: "Embalagem Longa Vida (Caixa de Leite)", categoria: "Papel", dicas: "Lave por dentro. Por ter plástico e alumínio, é uma embalagem mista, mas é aceita na coleta de papel.", dicasReutilizacao: ["Use como molde para fazer blocos de gelo grandes (para caixas térmicas).", "Crie porta-trecos ou estojos forrados.", "Transforme em pequenos cofrinhos ou porta-lápis."]},
+                { id: 27, nome: "Cadernos Velhos", categoria: "Papel", dicas: "Retire as capas de plástico (se houver) e o arame espiral (metal). O papel pode ser reciclado.", dicasReutilizacao: ["Use as páginas em branco ou com anotações claras como papel de rascunho.", "Use as capas para fazer novas pastas ou cadernos personalizados.", "Recorte as folhas para fazer blocos de notas."]},
+                { id: 28, nome: "Tubos de Papel Higiênico", categoria: "Papel", dicas: "Reciclável. Achate-os antes de descartar.", dicasReutilizacao: ["Use para organizar cabos elétricos ou fios em gavetas.", "Crie bichinhos ou figuras para brincar com crianças.", "Sirva como mini-vaso para semear antes de transplantar."]},
+                { id: 29, nome: "Envelope de Papel", categoria: "Papel", dicas: "Reciclável. Se tiver 'janela' de plástico, não precisa remover, a cooperativa faz isso.", dicasReutilizacao: ["Use para guardar pequenas contas ou recibos.", "Crie envelopes menores a partir dos grandes.", "Use para proteger documentos importantes."]},
+                { id: 30, nome: "Saco de Pão (Limpo)", categoria: "Papel", dicas: "Descarte na coleta seletiva.", dicasReutilizacao: ["Use para embrulhar presentes de forma rústica.", "Sirva para guardar pães caseiros por mais tempo.", "Use para coletar lixo orgânico seco."]},
+                { id: 31, nome: "Papel de Presente (Não Plastificado)", categoria: "Papel", dicas: "Reciclável, mas remova laços, fitas de plástico ou glitter.", dicasReutilizacao: ["Use para forrar gavetas ou prateleiras.", "Use pequenos pedaços para 'patchwork' em caixas de papelão.", "Guarde para embrulhar presentes menores ou fazer laços decorativos."]},
+                { id: 32, nome: "Embalagem de Ovos (Papelão)", categoria: "Papel", dicas: "Reciclável. Se estiver limpa e seca.", dicasReutilizacao: ["Use como paleta de tinta para crianças.", "Sirva para guardar pequenos itens como moedas ou materiais de costura.", "Utilize para proteger frutas delicadas na fruteira."]},
+
+
+                // VIDRO (VERDE)
+                { id: 41, nome: "Garrafa de Vinho", categoria: "Vidro", dicas: "Lave e remova a rolha e rótulos. Reciclável.",
+                    dicasReutilizacao: [
+                        "Transforme em um vaso de flor elegante e alto.",
+                        "Use para armazenar azeite aromatizado ou vinagre caseiro.",
+                        "Crie luminárias decorativas de Natal com luzes de LED dentro."
+                    ]
+                },
+                { id: 42, nome: "Pote de Maionese/Conservas", categoria: "Vidro", dicas: "Lave bem para não deixar resíduos. Retire a tampa (descarte como metal).",
+                    dicasReutilizacao: [
+                        "Use para armazenar grãos, temperos, sementes ou restos de comida na geladeira.",
+                        "Sirva como porta-lápis ou porta-pincéis de maquiagem.",
+                        "Crie presentes artesanais, como potes de doces ou geleias caseiras."
+                    ]
+                },
+                { id: 43, nome: "Garrafa de Cerveja", categoria: "Vidro", dicas: "Reciclável. Não é necessário remover rótulos.",
+                    dicasReutilizacao: [
+                        "Use para servir água em jarras decorativas.",
+                        "Crie um arranjo com várias garrafas coloridas como centro de mesa.",
+                        "Transforme em castiçal ou tocheiro de jardim."
+                    ]
+                },
+                { id: 44, nome: "Frasco de Perfume Vazio", categoria: "Vidro", dicas: "Reciclável. Remova a tampa e o borrifador (plástico/metal).",
+                    dicasReutilizacao: [
+                        "Use como mini-vaso para flores secas ou solitárias.",
+                        "Limpe bem e use para guardar óleos essenciais.",
+                        "Sirva como enfeite ou peso de papel."
+                    ]
+                },
+                { id: 45, nome: "Cacos de Vidro", categoria: "Vidro", dicas: "🚨 **ATENÇÃO!** Embale em jornal ou caixa de papelão grossa, identifique 'VIDRO QUEBRADO' para a segurança do coletor.", dicasReutilizacao: ["Use para fazer mosaicos artísticos (com muito cuidado!).", "Como base de drenagem em vasos de plantas (em vez de argila expandida).", "Devido ao risco de corte, a prioridade é o descarte seguro para reciclagem."]},
+                { id: 46, nome: "Copo de Vidro (Quebrado)", categoria: "Vidro", dicas: "O mesmo que cacos: embale e sinalize.", dicasReutilizacao: ["Use a base em mosaicos decorativos.", "Priorize a embalagem e o descarte seguro para a coleta seletiva.", "Peças de vidro não podem ser misturadas com louça/cerâmica para descarte."]},
+                { id: 47, nome: "Frasco de Remédio (Vidro)", categoria: "Vidro", dicas: "Lave. Remova a tampa (descarte separadamente).", dicasReutilizacao: ["Use para guardar remédios ou vitaminas em pequenas quantidades.", "Sirva como porta-agulhas ou alfinetes de costura.", "Use para amostras de perfume ou óleo essencial."]},
+                { id: 48, nome: "Vidro de Azeitona", categoria: "Vidro", dicas: "Lave bem para retirar o sal e o óleo.", dicasReutilizacao: ["Use para guardar temperos secos ou especiarias.", "Crie mini-jardins (terrarium) com musgos e pedras.", "Pode ser usado para armazenar café solúvel ou açúcar."]},
+                { id: 49, nome: "Garrafa de Azeite/Vinagre (Vidro)", categoria: "Vidro", dicas: "Não precisa estar totalmente limpo, mas deve escorrer o excesso.", dicasReutilizacao: ["Use para guardar seu próprio azeite ou vinagre caseiro.", "Sirva como dispenser de sabonete líquido (com um bico pump adaptado).", "Ótima para armazenar molhos caseiros."]},
+
+
+                // METAL (AMARELO)
+                { id: 61, nome: "Lata de Refrigerante", categoria: "Metal", dicas: "Amassar ajuda a otimizar o transporte. Reciclável.",
+                    dicasReutilizacao: [
+                        "Corte para criar porta-canetas ou porta-escovas de dente (lave bem e cubra as bordas cortantes).",
+                        "Transforme a lata em um pequeno vaso para suculentas.",
+                        "Use o metal recortado para fazer arte e artesanato."
+                    ]
+                },
+                { id: 62, nome: "Lata de Alimentos (Milho, Feijão)", categoria: "Metal", dicas: "Lave para evitar insetos. Reciclável.",
+                    dicasReutilizacao: [
+                        "Transforme em vaso suspenso ou cachepot.",
+                        "Use para organizar pregos e parafusos na oficina.",
+                        "Crie porta-talheres de cozinha ou churrasco."
+                    ]
+                },
+                { id: 63, nome: "Papel Alumínio (Limpo)", categoria: "Metal", dicas: "Faça uma bola compacta antes de descartar para evitar perdas no processo.",
+                    dicasReutilizacao: [
+                        "Use para afiar tesouras, cortando o papel várias vezes.",
+                        "Use um pedaço como funil temporário.",
+                        "Limpe prata ou objetos metálicos polindo-os com a folha amassada."
+                    ]
+                },
+                { id: 64, nome: "Tampa de Garrafa Metálica", categoria: "Metal", dicas: "Reciclável. Agrupe várias tampas em uma lata maior.",
+                    dicasReutilizacao: [
+                        "Use para fazer mosaicos ou decorações de mesa.",
+                        "Cole ímãs e use como porta-recados na geladeira.",
+                        "Sirva como base para fazer velas pequenas."
+                    ]
+                },
+                { id: 65, nome: "Arame (Limpo)", categoria: "Metal", dicas: "Dobre as pontas para evitar ferimentos. Reciclável.", dicasReutilizacao: ["Use para pendurar quadros ou objetos leves.", "Modele para criar esculturas e artesanato.", "Sirva para amarrar pacotes ou fechar sacos de lixo."]},
+                { id: 66, nome: "Prego e Parafuso (Velhos)", categoria: "Metal", dicas: "Junte em um recipiente seguro (como uma lata) antes de descartar.", dicasReutilizacao: ["Doe a ferros-velhos para derretimento e reciclagem.", "Use para criar pequenos pesos de artesanato.", "Guarde para uso futuro em reparos menores."]},
+                { id: 67, nome: "Lata de Aerossol (Vazia)", categoria: "Metal", dicas: "Certifique-se que o conteúdo terminou. Reciclável, mas informe que era aerossol.", dicasReutilizacao: ["Após esvaziar totalmente e limpar, pode ser usada como peso de porta.", "Crie instrumentos de percussão (como chocalhos).", "A prioridade é o descarte seguro, pois pode conter gases residuais."]},
+                { id: 68, nome: "Panela Velha (Sem Cabo)", categoria: "Metal", dicas: "Ótimo para reciclagem. Descarte o cabo de plástico ou madeira separadamente (Comum).", dicasReutilizacao: ["Use como bacia para lavar itens ou para armazenar água de chuva.", "Transforme em um sino dos ventos cortando e pendurando peças metálicas.", "Pode ser usada como vaso para plantas grandes."]},
+
+
+                // ORGÂNICO (MARROM ESCURO)
+                { id: 81, nome: "Cascas de Frutas (Banana, Maçã)", categoria: "Orgânico", dicas: "Ideal para compostagem. Se não tiver composteira, descarte no lixo comum.",
+                    dicasReutilizacao: [
+                        "Compostagem: Use na sua composteira caseira para criar adubo rico em nutrientes.",
+                        "Chá: Cascas de maçã e laranja podem ser usadas para fazer chás aromatizados.",
+                        "Fertilizante: Cascas de banana podem ser batidas com água para criar um fertilizante líquido rico em potássio para plantas."
+                    ]
+                },
+                { id: 82, nome: "Restos de Vegetais e Legumes", categoria: "Orgânico", dicas: "Compostáveis. Evite restos de carne e gordura na composteira caseira.",
+                    dicasReutilizacao: [
+                        "Caldo Caseiro: Use talos e pontas de vegetais para fazer caldo de legumes caseiro (e depois descarte o resíduo na composteira).",
+                        "Compostagem: Principal matéria-prima para o 'lado verde' da composteira.",
+                        "Alimentação Animal: Restos limpos podem servir de alimento para animais domésticos ou de criação."
+                    ]
+                },
+                { id: 83, nome: "Pó de Café e Filtros de Papel", categoria: "Orgânico", dicas: "Compostáveis. O filtro de papel deve ser de papel comum (não plastificado).",
+                    dicasReutilizacao: [
+                        "Adubo: Misture a borra de café diretamente na terra de vasos para enriquecer o solo.",
+                        "Cheiro: Use a borra para neutralizar odores na geladeira (em um potinho aberto).",
+                        "Esfoliante: Misture a borra com óleo de coco ou mel para um esfoliante corporal natural."
+                    ]
+                },
+                { id: 84, nome: "Cascas de Ovos", categoria: "Orgânico", dicas: "Ótimas para a composteira, pois adicionam cálcio.",
+                    dicasReutilizacao: [
+                        "Fertilizante: Triture bem e misture à terra para fornecer cálcio às plantas.",
+                        "Repelente: Espalhe em volta das plantas para afastar lesmas e caracóis.",
+                        "Limpeza: Use pedaços triturados para limpar garrafas e vasos difíceis de esfregar (agite com água)."
+                    ]
+                },
+                { id: 85, nome: "Restos de Comida (Exceto Óleo)", categoria: "Orgânico", dicas: "Descarte no lixo comum, a menos que sua cidade tenha coleta de orgânicos ou você tenha uma composteira industrial.", dicasReutilizacao: ["A prioridade deve ser evitar o desperdício, controlando as porções.", "Compostagem: Se for carne, descarte em composteiras industriais ou com controle profissional.", "Alimentação Animal: Se for pão ou grãos, pode ser usado para alimentar aves e outros animais."]},
+                { id: 86, nome: "Saquinhos de Chá (Sem Plástico)", categoria: "Orgânico", dicas: "O saquinho e o conteúdo são compostáveis, se não tiverem grampos de metal.", dicasReutilizacao: ["Desinfecção: Use o saquinho úmido para limpar pequenas superfícies.", "Compostagem: Adicione diretamente à composteira.", "Beleza: Use saquinhos frios para diminuir o inchaço dos olhos."]},
+                { id: 87, nome: "Papel Toalha Sujo (Óleo/Comida)", categoria: "Comum/Outros", dicas: "O papel toalha sujo de comida ou gordura deve ir para o lixo Comum/Orgânico, pois não é reciclável.", dicasReutilizacao: ["Reutilizar é difícil devido à contaminação. Priorize o descarte em lixo comum/orgânico.", "Em pequenas quantidades e se pouco contaminado, pode ser adicionado à composteira.", "Se for só água, use para limpar superfícies não críticas."]},
+                { id: 88, nome: "Pelo, Cabelo e Unhas", categoria: "Orgânico", dicas: "Compostáveis (ricos em nitrogênio). Caso contrário, descarte no lixo comum.", dicasReutilizacao: ["Compostagem: Adicione à composteira em pequenas quantidades.", "Jardinagem: Use como 'barreira' natural em volta de plantas para afastar alguns pets (cães/gatos).", "Priorize a compostagem."]},
+
+
+                // COMUM/OUTROS (CINZA)
+                { id: 101, nome: "Fraldas Descartáveis", categoria: "Comum/Outros", dicas: "Lixo não reciclável. Descarte no lixo comum.",
+                    dicasReutilizacao: [
+                        "Não há reutilização segura para fraldas usadas. Priorize sempre o descarte correto no lixo comum/rejeito.",
+                        "Alternativa: Considere o uso de fraldas de pano reutilizáveis para reduzir drasticamente este tipo de resíduo.",
+                        "Não devem ser compostadas devido aos fluidos e ao plástico."
+                    ]
+                },
+                { id: 102, nome: "Papel Carbono", categoria: "Comum/Outros", dicas: "Não reciclável devido aos componentes químicos. Lixo comum.",
+                    dicasReutilizacao: [
+                        "Não tem reutilização segura devido aos químicos e pigmentos.",
+                        "A melhor ação é evitar o uso e preferir documentos digitais ou impressão em duas vias.",
+                        "Descarte no lixo comum."
+                    ]
+                },
+                { id: 103, nome: "Cerâmica e Louça (Quebrada)", categoria: "Comum/Outros", dicas: "Não é vidro reciclável. Descarte no lixo comum, embalado e sinalizado para evitar acidentes.",
+                    dicasReutilizacao: [
+                        "Mosaico: Use os cacos para fazer mosaicos em vasos, paredes ou artesanato (com muito cuidado).",
+                        "Drenagem: Use pedaços maiores no fundo de vasos de plantas para ajudar na drenagem.",
+                        "Não podem ser recicladas na coleta comum."
+                    ]
+                },
+                { id: 104, nome: "Esponja de Cozinha Usada", categoria: "Comum/Outros", dicas: "Lixo não reciclável. Descarte no lixo comum.",
+                    dicasReutilizacao: [
+                        "Antes de descartar, use para a limpeza pesada (chão, rodapé, quintal).",
+                        "Corte em pedacinhos para limpar áreas estreitas ou rejuntes.",
+                        "Lave e guarde para limpar ferramentas ou equipamentos de jardinagem."
+                    ]
+                },
+                { id: 105, nome: "Bucha Vegetal (Estragada)", categoria: "Orgânico", dicas: "Compostável. Se não for compostar, pode ir para o lixo comum.", dicasReutilizacao: ["Compostagem: Corte em pedaços e adicione à composteira.", "Jardinagem: Use para proteger o caule de mudas de roedores.", "Após muito uso, priorize a compostagem, pois é biodegradável."]},
+                { id: 106, nome: "Papel Higiênico (Usado)", categoria: "Comum/Outros", dicas: "Lixo não reciclável. Descarte no lixo comum.", dicasReutilizacao: ["Não há reutilização segura. Priorize sempre o descarte no lixo comum/rejeito."]},
+                { id: 107, nome: "Restos de Cigarro", categoria: "Comum/Outros", dicas: "Lixo não reciclável e tóxico. Descarte no lixo comum, em recipiente fechado.", dicasReutilizacao: ["Estes resíduos são tóxicos e não devem ser reutilizados.", "Procure programas de reciclagem específicos para bitucas (raros, mas existem).", "Descarte sempre em lixo comum."]},
+                { id: 108, nome: "Lâmpadas Incandescentes", categoria: "Comum/Outros", dicas: "Não são recicláveis e não são lixo especial. Descarte no lixo comum, com cuidado para não quebrar.", dicasReutilizacao: ["Use o bulbo para fazer pequenos terrários (com cuidado e proteção).", "Crie pesos de artesanato.", "A prioridade é o descarte seguro."]},
+                { id: 109, nome: "Guardanapo e Papel Toalha (Sujos)", categoria: "Comum/Outros", dicas: "Contaminado por gordura ou fluidos. Lixo comum.", dicasReutilizacao: ["Não há reutilização segura. Descarte no lixo comum."]},
+                { id: 110, nome: "Vidro de Janela (Plano)", categoria: "Comum/Outros", dicas: "Não é reciclável comum. Procure ecopontos ou empresas de descarte de construção civil.", dicasReutilizacao: ["Use em projetos de mosaico ou vitrais.", "Pode ser usado para cobrir pequenas mesas ou prateleiras.", "Priorize o descarte em empresas especializadas."]},
+                { id: 111, nome: "Pneu (Velho)", categoria: "Comum/Outros", dicas: "Não é lixo comum. Descarte em borracharias ou ecopontos especializados.", dicasReutilizacao: ["Use como balanço ou assento em parquinhos infantis.", "Transforme em jardineiras ou vasos de plantas grandes.", "Procure postos de coleta para reciclagem de borracha."]},
+                { id: 112, nome: "Embalagem Plástica (Suja de Óleo)", categoria: "Comum/Outros", dicas: "Se estiver muito engordurada, descarte no lixo comum.", dicasReutilizacao: ["Se a sujeira for mínima, tente limpar e reutilizar para guardar itens não alimentares.", "Use para descartar óleos em pequena quantidade (jogue o óleo usado dentro da embalagem).", "Se a contaminação for grande, descarte no lixo comum."]},
+                { id: 113, nome: "Bolas de Algodão (Usadas)", categoria: "Comum/Outros", dicas: "Lixo não reciclável. Descarte no lixo comum.", dicasReutilizacao: ["Não há reutilização segura. Descarte no lixo comum."]},
+                { id: 114, nome: "Resíduos de Varrição", categoria: "Comum/Outros", dicas: "Lixo não reciclável. Descarte no lixo comum.", dicasReutilizacao: ["Não há reutilização segura. Descarte no lixo comum."]},
+                { id: 115, nome: "Eletrodomésticos Quebrados (Pequenos)", categoria: "Comum/Outros", dicas: "Lixo eletrônico. Leve a ecopontos, lojas ou empresas de coleta especializadas.", dicasReutilizacao: ["Doe para empresas de recondicionamento ou ONGs.", "Use as carcaças para projetos de arte ou robótica.", "Priorize o descarte em ecopontos."]},
+                { id: 116, nome: "CDs e DVDs Quebrados", categoria: "Comum/Outros", dicas: "Apesar de serem plástico, o material é difícil de reciclar. Procure pontos de coleta específicos ou descarte como comum.", dicasReutilizacao: ["Mosaicos e decorações que refletem a luz.", "Use como porta-copos (coaster).", "Doe para pontos de coleta especializados."]},
+                { id: 117, nome: "Isopor (Contaminado com Comida)", categoria: "Comum/Outros", dicas: "Se estiver sujo, não é reciclável. Descarte no lixo comum.", dicasReutilizacao: ["Não há reutilização segura. Descarte no lixo comum."]},
+                { id: 118, nome: "Pilhas e Baterias", categoria: "Comum/Outros", dicas: "Lixo especial! Leve a coletores em supermercados, farmácias ou lojas de eletrônicos. Nunca no lixo comum!", dicasReutilizacao: ["NÃO REUTILIZAR. Apenas descarte em coletores especiais, pois são altamente tóxicas."]},
+                { id: 119, nome: "Lâmpadas Fluorescentes", categoria: "Comum/Outros", dicas: "Lixo especial. Contém mercúrio. Devolva em lojas que vendem o produto ou ecopontos especializados.", dicasReutilizacao: ["NÃO REUTILIZAR. Devolva nos pontos de coleta para evitar vazamento de mercúrio."]},
+                { id: 120, nome: "Óleo de Cozinha (Usado)", categoria: "Comum/Outros", dicas: "Nunca jogue no ralo! Armazene em garrafas PET e leve a pontos de coleta específicos.", dicasReutilizacao: ["Transforme em sabão caseiro (requer processo químico seguro).", "Leve a pontos de coleta para ser transformado em biodiesel.", "NÃO USE para cozinhar novamente. Descarte corretamente."]},
+                { id: 121, nome: "Embalagem de Pizza (Engordurada)", categoria: "Comum/Outros", dicas: "O papel sujo de gordura não é reciclável. Descarte no lixo comum.", dicasReutilizacao: ["Não há reutilização segura. Descarte no lixo comum."]},
+                { id: 122, nome: "Termômetros (Antigos)", categoria: "Comum/Outros", dicas: "Contém mercúrio. Lixo especial! Devolva em farmácias ou postos de saúde.", dicasReutilizacao: ["NÃO REUTILIZAR. Devolva em farmácias para descarte especializado (lixo perigoso)."]}
+            ];
+
+            
+            const resultsGrid = document.getElementById('resultsGrid');
+            const searchInput = document.getElementById('searchInput');
+            const categoryFiltersContainer = document.getElementById('categoryFilters');
+            const noResults = document.getElementById('noResults');
+
+            const modal = document.getElementById('modal');
+            const modalContent = document.getElementById('modal-content');
+            const closeModalBtn = document.getElementById('closeModal');
+            const reuseIdeasOutput = document.getElementById('reuseIdeasOutput'); // Lista (ul)
+            const modalColorBlock = document.getElementById('modal-color-block'); // O novo bloco de cor no modal
+
+            let activeCategory = 'Todos';
+
+            function renderCards(data) {
+                resultsGrid.innerHTML = '';
+                if (data.length === 0) {
+                    noResults.classList.remove('hidden');
+                } else {
+                    noResults.classList.add('hidden');
+                }
+                data.forEach(item => {
+                    const colors = categoryColors[item.categoria] || { bg: "bg-gray-500", text: "text-white", border: "border-gray-700" };
+                    const card = document.createElement('div');
+                    card.className = `waste-card bg-white rounded-lg shadow-md overflow-hidden cursor-pointer border-b-4 ${colors.border}`;
+                    card.innerHTML = `
+                        <!-- Bloco de cor no lugar da imagem -->
+                        <div class="w-full h-20 sm:h-28 flex items-center justify-center ${colors.bg}">
+                             <span class="font-bold text-xl ${colors.text} p-2 rounded-lg bg-black bg-opacity-10">${item.categoria.toUpperCase()}</span>
+                        </div>
+                        <div class="p-3">
+                            <h3 class="font-bold text-sm truncate">${item.nome}</h3>
+                            <p class="text-xs ${colors.displayText} font-semibold">${item.categoria}</p>
+                        </div>
+                    `;
+                    card.addEventListener('click', () => showModal(item));
+                    resultsGrid.appendChild(card);
+                });
+            }
+
+            function filterAndRender() {
+                const searchTerm = searchInput.value.toLowerCase();
+                let filteredData = wasteData;
+
+                if (activeCategory !== 'Todos') {
+                    filteredData = filteredData.filter(item => item.categoria === activeCategory);
+                }
+
+                if (searchTerm) {
+                    filteredData = filteredData.filter(item => item.nome.toLowerCase().includes(searchTerm));
+                }
+
+                renderCards(filteredData);
+            }
+
+            function createCategoryButtons() {
+                const categories = ['Todos', ...Object.keys(categoryColors)];
+                categories.forEach(category => {
+                    const button = document.createElement('button');
+                    button.textContent = category;
+                    button.className = `category-button px-4 py-2 text-sm font-medium rounded-full border`;
+                    if (category === 'Todos') {
+                        button.classList.add('bg-emerald-600', 'text-white', 'border-emerald-600');
+                    } else {
+                        button.classList.add('bg-white', 'text-slate-700', 'border-slate-300');
+                    }
+                    button.dataset.category = category;
+                    button.addEventListener('click', () => {
+                        activeCategory = category;
+                        document.querySelectorAll('#categoryFilters button').forEach(btn => {
+                            btn.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-600');
+                            btn.classList.add('bg-white', 'text-slate-700', 'border-slate-300');
+                        });
+                        button.classList.add('bg-emerald-600', 'text-white', 'border-emerald-600');
+                        button.classList.remove('bg-white', 'text-slate-700', 'border-slate-300');
+                        filterAndRender();
+                    });
+                    categoryFiltersContainer.appendChild(button);
+                });
+            }
+            
+            function showModal(item) {
+                document.getElementById('modal-title').textContent = item.nome;
+                
+                const colors = categoryColors[item.categoria] || { bg: "bg-gray-500", text: "text-white", displayBg: "bg-gray-100", displayText: "text-gray-800" };
+
+                // Configura o Bloco de Cor
+                modalColorBlock.className = `w-full h-40 object-cover rounded-md shadow-md flex items-center justify-center ${colors.bg}`;
+                modalColorBlock.querySelector('span').className = `text-2xl font-bold ${colors.text}`;
+                modalColorBlock.querySelector('span').textContent = item.categoria.toUpperCase();
+
+                const categoryEl = document.getElementById('modal-category');
+                categoryEl.textContent = item.categoria;
+                categoryEl.className = `text-center mt-2 font-semibold text-sm py-1 px-3 rounded-full ${colors.displayBg} ${colors.displayText}`;
+
+                document.getElementById('modal-tips').innerHTML = `<p>${item.dicas.replace(/\n/g, '<br>')}</p>`;
+
+                const mapLink = document.getElementById('map-link');
+                mapLink.href = `https://www.google.com/maps/search/?api=1&query=ecoponto+ponto+de+coleta+de+${item.categoria}+perto+de+mim`;
+
+                // Renderiza as dicas de reutilização estáticas
+                reuseIdeasOutput.innerHTML = item.dicasReutilizacao.map(tip => `<li>${tip}</li>`).join('');
+
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modalContent.classList.remove('scale-95', 'opacity-0');
+                    modalContent.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            }
+
+            function hideModal() {
+                modalContent.classList.add('scale-95', 'opacity-0');
+                 setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+
+            function createChart() {
+                const ctx = document.getElementById('wasteChart').getContext('2d');
+                const categoryCounts = wasteData.reduce((acc, item) => {
+                    acc[item.categoria] = (acc[item.categoria] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const labels = Object.keys(categoryCounts);
+                const data = Object.values(categoryCounts);
+
+                // CORES ATUALIZADAS PARA O GRÁFICO (usando as cores solicitadas)
+                const colorMap = {
+                    "Papel": 'rgba(59, 130, 246, 0.7)',     // Azul (blue-500)
+                    "Metal": 'rgba(251, 191, 36, 0.7)',     // Amarelo (yellow-500)
+                    "Orgânico": 'rgba(120, 53, 15, 0.7)',   // Marrom (Amber-800)
+                    "Plástico": 'rgba(239, 68, 68, 0.7)',    // Vermelho (red-500)
+                    "Vidro": 'rgba(16, 185, 129, 0.7)',      // Verde (green-500)
+                    "Comum/Outros": 'rgba(100, 116, 139, 0.7)' // Cinza (slate-500)
+                };
+                const backgroundColors = labels.map(label => colorMap[label] || 'rgba(156, 163, 175, 0.7)');
+
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Tipos de Resíduos',
+                            data: data,
+                            backgroundColor: backgroundColors,
+                            borderColor: '#ffffff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            label += context.parsed + ' item(s)';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            searchInput.addEventListener('input', filterAndRender);
+            closeModalBtn.addEventListener('click', hideModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    hideModal();
+                }
+            });
+
+            createCategoryButtons();
+            renderCards(wasteData);
+            createChart();
+        });
+    </script>
+</body>
+</html>
+    
+  </body>
+  
+</html>
